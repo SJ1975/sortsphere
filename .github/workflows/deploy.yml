@@ -17,7 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Upgraded from Node 20 to Node 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -26,10 +25,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      # Skip lint for now — focus on getting build working first
-      # - name: Run ESLint
-      #   run: npm run lint
 
       - name: Build project
         run: npm run build
@@ -41,11 +36,28 @@ jobs:
           NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: /dashboard
           NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: /dashboard
 
+      # Install latest Vercel CLI directly — no third-party action
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Pull Vercel project settings
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Build on Vercel's side
+      - name: Build on Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Deploy prebuilt output to Vercel
       - name: Deploy to Vercel
         if: github.ref == 'refs/heads/main'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
