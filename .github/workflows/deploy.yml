@@ -1,0 +1,57 @@
+name: Deploy to Vercel
+
+# This workflow runs every time you push to the main branch
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest   # Uses a fresh Linux machine in the cloud
+
+    steps:
+      # Step 1: Download your code onto the cloud machine
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js on the cloud machine
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'      # Caches node_modules to make future runs faster
+
+      # Step 3: Install all your npm packages
+      - name: Install dependencies
+        run: npm ci           # 'ci' is like 'install' but faster and stricter
+
+      # Step 4: Check code for errors
+      - name: Run ESLint
+        run: npm run lint
+
+      # Step 5: Build the production version of your app
+      - name: Build project
+        run: npm run build
+        env:
+          # Inject secrets as environment variables during build
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+          NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
+          NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: /dashboard
+          NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: /dashboard
+
+      # Step 6: Deploy to Vercel (only on pushes to main, not on pull requests)
+      - name: Deploy to Vercel
+        if: github.ref == 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'    # Deploy to production (not preview)
