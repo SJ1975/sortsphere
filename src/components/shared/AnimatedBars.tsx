@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { SortingEngine } from '@/features/sorting/engine';
-import { SortFrame } from '@/types/sorting';
+import { useEffect, useRef, useState } from "react";
+import { SortingEngine } from "@/features/sorting/engine";
+import { SortFrame } from "@/types/sorting";
 
 const BAR_COUNT = 30;
-const FRAME_DELAY_MS = 55; // How fast the animation plays in hero
+const FRAME_DELAY_MS = 55;
 
 export function AnimatedBars() {
-  const [displayArray, setDisplayArray] = useState<number[]>(() =>
-    // Initial placeholder bars (random heights before engine loads)
+  const [mounted, setMounted] = useState(false);
+  const [displayArray, setDisplayArray] = useState<number[]>(
+    // Deterministic placeholder — same on server and client
     Array.from({ length: BAR_COUNT }, (_, i) =>
-      Math.floor(Math.sin((i / BAR_COUNT) * Math.PI * 2 + 1) * 40 + 50)
-    )
+      Math.round(((i + 1) / BAR_COUNT) * 90 + 5),
+    ),
   );
   const [highlights, setHighlights] = useState<Record<number, string>>({});
 
@@ -21,15 +22,20 @@ export function AnimatedBars() {
   const framesRef = useRef<SortFrame[]>([]);
   const frameIdxRef = useRef(0);
 
+  // Set mounted on client only
   useEffect(() => {
-    let alive = true; // Prevents state updates after unmount
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // Don't run animation until client is ready
+
+    let alive = true;
 
     const runCycle = () => {
       if (!alive) return;
-
-      // Generate fresh random array and compute all frames upfront
       const arr = SortingEngine.generateArray(BAR_COUNT, 8, 100);
-      framesRef.current = SortingEngine.generateFrames('bubble', arr);
+      framesRef.current = SortingEngine.generateFrames("bubble", arr);
       frameIdxRef.current = 0;
 
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -41,7 +47,6 @@ export function AnimatedBars() {
         const frames = framesRef.current;
 
         if (idx >= frames.length) {
-          // Sort complete — clear and restart after a pause
           if (intervalRef.current) clearInterval(intervalRef.current);
           timeoutRef.current = setTimeout(runCycle, 1400);
           return;
@@ -50,20 +55,27 @@ export function AnimatedBars() {
         const frame = frames[idx];
         setDisplayArray([...frame.array]);
 
-        // Map event type to a color class name
         const newHighlights: Record<number, string> = {};
         switch (frame.event.type) {
-          case 'COMPARE':
-            frame.event.indices.forEach((i) => { newHighlights[i] = 'compare'; });
+          case "COMPARE":
+            frame.event.indices.forEach((i) => {
+              newHighlights[i] = "compare";
+            });
             break;
-          case 'SWAP':
-            frame.event.indices.forEach((i) => { newHighlights[i] = 'swap'; });
+          case "SWAP":
+            frame.event.indices.forEach((i) => {
+              newHighlights[i] = "swap";
+            });
             break;
-          case 'MARK_SORTED':
-            frame.event.indices.forEach((i) => { newHighlights[i] = 'sorted'; });
+          case "MARK_SORTED":
+            frame.event.indices.forEach((i) => {
+              newHighlights[i] = "sorted";
+            });
             break;
-          case 'PARTITION':
-            frame.event.indices.forEach((i) => { newHighlights[i] = 'partition'; });
+          case "PARTITION":
+            frame.event.indices.forEach((i) => {
+              newHighlights[i] = "partition";
+            });
             break;
         }
 
@@ -79,33 +91,33 @@ export function AnimatedBars() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, []);
+  }, [mounted]); // Only depends on mounted — runs once after hydration
 
   const maxVal = Math.max(...displayArray, 1);
 
   const getBarColor = (index: number): string => {
     switch (highlights[index]) {
-      case 'compare':  return '#fbbf24'; // amber
-      case 'swap':     return '#f43f5e'; // rose
-      case 'sorted':   return '#10b981'; // emerald
-      case 'partition':return '#22d3ee'; // cyan
-      default:         return '#6366f1'; // indigo
+      case "compare":
+        return "#fbbf24";
+      case "swap":
+        return "#f43f5e";
+      case "sorted":
+        return "#10b981";
+      case "partition":
+        return "#22d3ee";
+      default:
+        return "#6366f1";
     }
-  };
-
-  const getGlow = (index: number): string => {
-    if (!highlights[index]) return 'none';
-    return `0 0 8px ${getBarColor(index)}99`;
   };
 
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        gap: '2px',
-        height: '180px',
-        width: '100%',
+        display: "flex",
+        alignItems: "flex-end",
+        gap: "2px",
+        height: "180px",
+        width: "100%",
       }}
     >
       {displayArray.map((val, i) => (
@@ -115,9 +127,11 @@ export function AnimatedBars() {
             flex: 1,
             height: `${(val / maxVal) * 100}%`,
             backgroundColor: getBarColor(i),
-            borderRadius: '3px 3px 0 0',
-            transition: 'height 0.06s ease, background-color 0.08s ease',
-            boxShadow: getGlow(i),
+            borderRadius: "3px 3px 0 0",
+            transition: mounted
+              ? "height 0.06s ease, background-color 0.08s ease"
+              : "none",
+            boxShadow: highlights[i] ? `0 0 8px ${getBarColor(i)}99` : "none",
           }}
         />
       ))}

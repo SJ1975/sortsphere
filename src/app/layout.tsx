@@ -50,7 +50,9 @@ export default function RootLayout({
         lang="en"
         className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${geist.variable}`}
       >
-        <body className="antialiased">{children}</body>
+        <body className="antialiased" suppressHydrationWarning>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );

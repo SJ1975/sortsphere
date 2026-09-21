@@ -11,78 +11,64 @@ export function useSortingEngine() {
   const visualization = useVisualizationStore();
   const preferences = usePreferencesStore();
 
-  // Current frame being displayed
   const currentFrame = sorting.frames[visualization.currentFrameIndex];
   const totalFrames = sorting.frames.length;
   const isFinished = visualization.currentFrameIndex >= totalFrames - 1;
 
-  // ── Start or resume playback ──
   const handlePlay = useCallback(() => {
     if (isFinished) {
-      // If already at end, reset first then play
-      visualization.reset();
+      useVisualizationStore.getState().reset();
     }
-    visualization.play(totalFrames, () => {
-      // Called when animation finishes
-      console.log('Animation complete');
-    });
-  }, [isFinished, totalFrames, visualization]);
+    useVisualizationStore.getState().play(
+      useSortingStore.getState().frames.length,
+      () => { console.log('Animation complete'); }
+    );
+  }, [isFinished]);
 
-  // ── Pause playback ──
   const handlePause = useCallback(() => {
-    visualization.pause();
-  }, [visualization]);
+    useVisualizationStore.getState().pause();
+  }, []);
 
-  // ── Reset to beginning ──
   const handleReset = useCallback(() => {
-    visualization.reset();
-  }, [visualization]);
+    useVisualizationStore.getState().reset();
+  }, []);
 
-  // ── Generate a new random array ──
   const handleRandomize = useCallback(() => {
-    visualization.reset();
-    sorting.generateNewArray();
-  }, [visualization, sorting]);
+    useVisualizationStore.getState().reset();
+    useSortingStore.getState().generateNewArray();
+  }, []);
 
-  // ── Change algorithm ──
   const handleAlgorithmChange = useCallback(
     (algorithm: AlgorithmKey) => {
-      visualization.reset();
-      sorting.setAlgorithm(algorithm);
-      preferences.setLastAlgorithm(algorithm);
+      useVisualizationStore.getState().reset();
+      useSortingStore.getState().setAlgorithm(algorithm);
+      usePreferencesStore.getState().setLastAlgorithm(algorithm);
     },
-    [visualization, sorting, preferences]
+    []
   );
 
-  // ── Change array size ──
-  const handleSizeChange = useCallback(
-    (size: number) => {
-      const clampedSize = Math.min(MAX_ARRAY_SIZE, Math.max(MIN_ARRAY_SIZE, size));
-      visualization.reset();
-      sorting.setArraySize(clampedSize);
-    },
-    [visualization, sorting]
-  );
+  const handleSizeChange = useCallback((size: number) => {
+    const clamped = Math.min(MAX_ARRAY_SIZE, Math.max(MIN_ARRAY_SIZE, size));
+    useVisualizationStore.getState().reset();
+    useSortingStore.getState().setArraySize(clamped);
+  }, []);
 
-  // ── Handle custom array input ──
-  const handleCustomInput = useCallback(
-    (input: string) => {
-      const parsed = SortingEngine.parseCustomInput(input, MAX_ARRAY_SIZE);
-      if (parsed) {
-        visualization.reset();
-        sorting.setCustomArray(parsed);
-      }
-      return parsed !== null; // Return true if input was valid
-    },
-    [visualization, sorting]
-  );
+  const handleCustomInput = useCallback((input: string) => {
+    const parsed = SortingEngine.parseCustomInput(input, MAX_ARRAY_SIZE);
+    if (parsed) {
+      useVisualizationStore.getState().reset();
+      useSortingStore.getState().setCustomArray(parsed);
+    }
+    return parsed !== null;
+  }, []);
 
-  // Cleanup: stop animation if component unmounts
+  // Cleanup on unmount only — empty deps prevents infinite loop
+  // Using getState() so we don't depend on visualization object
   useEffect(() => {
     return () => {
-      visualization.pause();
+      useVisualizationStore.getState().pause();
     };
-  }, [visualization]);
+  }, []); // empty array = runs cleanup only on unmount
 
   return {
     // State
@@ -97,13 +83,11 @@ export function useSortingEngine() {
     arraySize: sorting.arraySize,
     originalArray: sorting.originalArray,
 
-    // Playback actions
+    // Actions
     handlePlay,
     handlePause,
     handleReset,
     handleRandomize,
-
-    // Configuration actions
     handleAlgorithmChange,
     handleSizeChange,
     handleCustomInput,
