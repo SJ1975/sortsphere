@@ -54,8 +54,10 @@ export default function VisualizePage() {
   const engine = useSortingEngine();
   const { isFavorite, toggleFavorite } = usePreferencesStore();
   const [viewMode, setViewMode] = useState<ViewMode>("3d");
+  const [ready, setReady] = useState(false);
 
   const sortedIndices = useMemo(() => {
+    if (!ready) return new Set<number>();
     const frames = engine.frames;
     for (let i = engine.currentFrameIndex; i >= 0; i--) {
       if (frames[i]?.event.type === "MARK_SORTED") {
@@ -63,7 +65,7 @@ export default function VisualizePage() {
       }
     }
     return new Set<number>();
-  }, [engine.frames, engine.currentFrameIndex]);
+  }, [engine.frames, engine.currentFrameIndex, ready]);
 
   useEffect(() => {
     if (isValid && algorithmKey !== engine.algorithm) {
@@ -74,6 +76,8 @@ export default function VisualizePage() {
 
   useEffect(() => {
     useSortingStore.getState().generateNewArray();
+    const t = setTimeout(() => setReady(true), 80);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -103,27 +107,31 @@ export default function VisualizePage() {
   const favorite = isFavorite(algorithmKey);
 
   return (
+    // ── OUTER: full height, flex column, NO overflow ──
     <div
-      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+      style={{
+        height: "calc(100vh - 60px)", // subtract dashboard navbar height
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden", // prevent outer scroll
+      }}
     >
-      {/* ── Sub-header ── */}
+      {/* ── Sub-header: STATIC at top, never moves ── */}
       <div
         style={{
-          position: "sticky",
-          top: "60px",
-          zIndex: 40,
+          flexShrink: 0, // never shrinks
           padding: "0.75rem 2rem",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "rgba(7, 7, 26, 0.9)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
+          background: "rgba(7, 7, 26, 0.98)",
           borderBottom: "1px solid rgba(99, 102, 241, 0.1)",
           gap: "1rem",
           flexWrap: "wrap",
+          zIndex: 10,
         }}
       >
+        {/* Left */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <Link
             href="/dashboard"
@@ -132,6 +140,7 @@ export default function VisualizePage() {
               fontSize: "0.82rem",
               fontFamily: "var(--font-geist)",
               textDecoration: "none",
+              transition: "color 0.2s",
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = "#f1f5f9")}
             onMouseOut={(e) => (e.currentTarget.style.color = "#475569")}
@@ -165,8 +174,8 @@ export default function VisualizePage() {
           </span>
         </div>
 
+        {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          {/* 2D / 3D toggle */}
           <div
             style={{
               display: "flex",
@@ -231,166 +240,181 @@ export default function VisualizePage() {
         </div>
       </div>
 
-      {/* ── Main content ── */}
+      {/* ── CONTENT: scrolls independently below sub-header ── */}
       <div
         style={{
           flex: 1,
-          padding: "1.5rem 2rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.1rem",
-          maxWidth: "1200px",
-          margin: "0 auto",
-          width: "100%",
+          overflowY: "auto", // only this area scrolls
+          padding: "1.25rem 2rem 2rem",
         }}
       >
-        {/* Custom input */}
-        <CustomInput
-          onSubmit={engine.handleCustomInput}
-          onRandomize={engine.handleRandomize}
-          isPlaying={engine.isPlaying}
-        />
-
-        {/* Visualization area */}
         <div
           style={{
-            height: "360px",
-            borderRadius: "16px",
-            background:
-              viewMode === "3d" ? "#07071a" : "rgba(13, 13, 43, 0.65)",
-            border: "1px solid rgba(99, 102, 241, 0.12)",
-            position: "relative",
-            overflow: "hidden",
+            maxWidth: "1200px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.1rem",
           }}
         >
-          {/* Status badge */}
+          {/* Custom input */}
+          <CustomInput
+            onSubmit={engine.handleCustomInput}
+            onRandomize={engine.handleRandomize}
+            isPlaying={engine.isPlaying}
+          />
+
+          {/* Visualization area */}
           <div
             style={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              fontSize: "0.58rem",
-              fontFamily: "var(--font-mono)",
-              padding: "0.2rem 0.6rem",
-              borderRadius: "20px",
-              background: "rgba(7, 7, 26, 0.85)",
-              border: "1px solid rgba(99, 102, 241, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              color: engine.isPlaying
-                ? "#10b981"
-                : engine.isFinished
-                  ? "#818cf8"
-                  : "#475569",
-              zIndex: 10,
+              height: "360px",
+              borderRadius: "16px",
+              background:
+                viewMode === "3d" ? "#07071a" : "rgba(13, 13, 43, 0.65)",
+              border: "1px solid rgba(99, 102, 241, 0.12)",
+              position: "relative",
+              overflow: "hidden",
+              flexShrink: 0,
             }}
           >
-            <span
+            {/* Status badge */}
+            <div
               style={{
-                width: "5px",
-                height: "5px",
-                borderRadius: "50%",
-                background: engine.isPlaying
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                fontSize: "0.58rem",
+                fontFamily: "var(--font-mono)",
+                padding: "0.2rem 0.6rem",
+                borderRadius: "20px",
+                background: "rgba(7, 7, 26, 0.9)",
+                border: "1px solid rgba(99, 102, 241, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                color: engine.isPlaying
                   ? "#10b981"
                   : engine.isFinished
                     ? "#818cf8"
                     : "#475569",
-                boxShadow: engine.isPlaying ? "0 0 5px #10b981" : "none",
+                zIndex: 10,
               }}
-            />
-            {engine.isPlaying
-              ? "RUNNING"
-              : engine.isFinished
-                ? "COMPLETE"
-                : "READY"}
-          </div>
-
-          {viewMode === "3d" &&
-            !engine.isPlaying &&
-            engine.currentFrameIndex === 0 && (
-              <div
+            >
+              <span
                 style={{
-                  position: "absolute",
-                  bottom: "12px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  zIndex: 10,
-                  fontSize: "0.58rem",
-                  fontFamily: "var(--font-mono)",
-                  color: "#334155",
-                  padding: "0.2rem 0.7rem",
-                  background: "rgba(7,7,26,0.7)",
-                  borderRadius: "20px",
-                  border: "1px solid rgba(99,102,241,0.1)",
-                  pointerEvents: "none",
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  background: engine.isPlaying
+                    ? "#10b981"
+                    : engine.isFinished
+                      ? "#818cf8"
+                      : "#475569",
+                  boxShadow: engine.isPlaying ? "0 0 5px #10b981" : "none",
                 }}
-              >
-                drag to orbit · scroll to zoom
-              </div>
-            )}
+              />
+              {engine.isPlaying
+                ? "RUNNING"
+                : engine.isFinished
+                  ? "COMPLETE"
+                  : "READY"}
+            </div>
 
-          {viewMode === "3d" ? (
-            <Scene3D
-              frame={engine.currentFrame}
-              originalArray={engine.originalArray}
-              sortedIndices={sortedIndices}
-            />
-          ) : (
-            <div style={{ height: "100%", padding: "1rem 1rem 1rem 1rem" }}>
-              <Bars2D
+            {viewMode === "3d" &&
+              !engine.isPlaying &&
+              engine.currentFrameIndex === 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "12px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 10,
+                    fontSize: "0.58rem",
+                    fontFamily: "var(--font-mono)",
+                    color: "#334155",
+                    padding: "0.2rem 0.7rem",
+                    background: "rgba(7,7,26,0.7)",
+                    borderRadius: "20px",
+                    border: "1px solid rgba(99,102,241,0.1)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  drag to orbit · scroll to zoom
+                </div>
+              )}
+
+            {viewMode === "3d" ? (
+              <Scene3D
                 frame={engine.currentFrame}
                 originalArray={engine.originalArray}
                 sortedIndices={sortedIndices}
-                showValues={true}
               />
-            </div>
+            ) : (
+              <div style={{ height: "100%", padding: "1.5rem 1rem 1rem" }}>
+                <Bars2D
+                  frame={engine.currentFrame}
+                  originalArray={engine.originalArray}
+                  sortedIndices={sortedIndices}
+                  showValues={true}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Step explainer */}
+          {ready && (
+            <StepExplainer
+              frame={
+                engine.currentFrameIndex === 0 ? undefined : engine.currentFrame
+              }
+              algorithmKey={algorithmKey}
+              currentFrameIndex={engine.currentFrameIndex}
+              totalFrames={engine.totalFrames}
+              isPlaying={engine.isPlaying}
+              isFinished={engine.isFinished}
+            />
           )}
-        </div>
 
-        {/* Step explainer */}
-        <StepExplainer
-          frame={engine.currentFrame}
-          algorithmKey={algorithmKey}
-          currentFrameIndex={engine.currentFrameIndex}
-          totalFrames={engine.totalFrames}
-          isPlaying={engine.isPlaying}
-          isFinished={engine.isFinished}
-        />
-
-        {/* Playback controls */}
-        <PlaybackControls
-          isPlaying={engine.isPlaying}
-          isFinished={engine.isFinished}
-          speed={engine.speed}
-          arraySize={engine.arraySize}
-          currentFrameIndex={engine.currentFrameIndex}
-          totalFrames={engine.totalFrames}
-          handlePlay={engine.handlePlay}
-          handlePause={engine.handlePause}
-          handleReset={engine.handleReset}
-          handleRandomize={engine.handleRandomize}
-          setSpeed={engine.setSpeed}
-          seek={engine.seek}
-          handleSizeChange={engine.handleSizeChange}
-        />
-
-        {/* Bottom panels — 3 columns */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "1.1rem",
-          }}
-        >
-          <MetricsPanel
-            currentFrame={engine.currentFrame}
+          {/* Playback controls */}
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            isFinished={engine.isFinished}
+            speed={engine.speed}
+            arraySize={engine.arraySize}
             currentFrameIndex={engine.currentFrameIndex}
             totalFrames={engine.totalFrames}
-            speed={engine.speed}
+            handlePlay={engine.handlePlay}
+            handlePause={engine.handlePause}
+            handleReset={engine.handleReset}
+            handleRandomize={engine.handleRandomize}
+            setSpeed={engine.setSpeed}
+            seek={engine.seek}
+            handleSizeChange={engine.handleSizeChange}
           />
-          <ComplexityExplainer algorithmKey={algorithmKey} />
-          <PseudoCode algorithmKey={algorithmKey} frame={engine.currentFrame} />
+
+          {/* Bottom panels */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "1.1rem",
+            }}
+          >
+            <MetricsPanel
+              currentFrame={engine.currentFrame}
+              currentFrameIndex={engine.currentFrameIndex}
+              totalFrames={engine.totalFrames}
+              speed={engine.speed}
+            />
+            <ComplexityExplainer algorithmKey={algorithmKey} />
+            <PseudoCode
+              algorithmKey={algorithmKey}
+              frame={
+                engine.currentFrameIndex === 0 ? undefined : engine.currentFrame
+              }
+            />
+          </div>
         </div>
       </div>
     </div>
