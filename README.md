@@ -4,7 +4,7 @@
 
 # SortSphere
 
-### Premium 3D Sorting Algorithm Visualization Platform
+### Sorting Algorithm Visualization Platform
 
 **An immersive educational platform that transforms abstract sorting algorithms into interactive 3D experiences.**
 
@@ -121,53 +121,55 @@ Every algorithm includes:
 
 ## Architecture
 
+```
 src/
-├── app/ # Next.js App Router pages
-│ ├── page.tsx # Landing page (public)
-│ ├── dashboard/ # Algorithm picker (protected)
-│ └── visualize/[algo]/ # Visualization page (protected)
+├── app/                          # Next.js App Router pages
+│   ├── page.tsx                  # Landing page (public)
+│   ├── dashboard/                # Algorithm picker (protected)
+│   └── visualize/[algo]/         # Visualization page (protected)
 │
 ├── features/
-│ ├── sorting/
-│ │ ├── algorithms/ # 6 pure TypeScript sorting algorithms
-│ │ ├── engine/ # SortingEngine class (frame generator)
-│ │ └── hooks/ # useSortingEngine (connects all stores)
-│ │
-│ ├── renderer/
-│ │ ├── components/ # Scene3D, SortBars, SortBar, Bars2D
-│ │ └── config/ # Color mappings per event type
-│ │
-│ └── visualization/
-│ ├── components/ # PlaybackControls, MetricsPanel,
-│ │ # StepExplainer, PseudoCode,
-│ │ # ComplexityExplainer, CustomInput
-│ └── utils/ # stepExplainer (plain English generator)
+│   └── sorting/
+│       ├── algorithms/           # 6 pure TypeScript sorting algorithms
+│       ├── engine/               # SortingEngine class (frame generator)
+│       ├── hooks/                # useSortingEngine (connects all stores)
+│       ├── renderer/
+│       │   ├── components/       # Scene3D, SortBars, SortBar, Bars2D
+│       │   └── config/           # Color mappings per event type
+│       └── visualization/
+│           ├── components/       # PlaybackControls, MetricsPanel,
+│           │                     # StepExplainer, PseudoCode,
+│           │                     # ComplexityExplainer, CustomInput
+│           └── utils/            # stepExplainer (plain English generator)
 │
 ├── store/
-│ ├── sortingStore.ts # Algorithm + frames state
-│ ├── visualizationStore.ts # Play/pause/speed/frame state
-│ └── preferencesStore.ts # Favorites + settings (localStorage)
+│   ├── sortingStore.ts           # Algorithm + frames state
+│   ├── visualizationStore.ts     # Play/pause/speed/frame state
+│   └── preferencesStore.ts       # Favorites + settings (localStorage)
 │
 ├── lib/
-│ ├── constants.ts # Algorithm info + complexity data
-│ └── pseudocode.ts # Pseudocode + complexity explanations
+│   ├── constants.ts              # Algorithm info + complexity data
+│   └── pseudocode.ts             # Pseudocode + complexity explanations
 │
 └── types/
-└── sorting.ts # SortEvent, SortFrame, AlgorithmKey
+    └── sorting.ts                # SortEvent, SortFrame, AlgorithmKey
+```
 
 ### Sorting Engine Design
 
 The core architectural decision: **algorithms are renderer-independent.**
 
+```
 Algorithm (pure TypeScript)
-↓ emits SortFrame[]
+        ↓ emits SortFrame[]
 SortingEngine
-↓ pre-computes all frames
+        ↓ pre-computes all frames
 Zustand Store
-↓ currentFrameIndex advances on interval
+        ↓ currentFrameIndex advances on interval
 Renderer (3D or 2D)
-↓ reads frame, maps event type → color
+        ↓ reads frame, maps event type → color
 Screen
+```
 
 Every algorithm emits typed events:
 
