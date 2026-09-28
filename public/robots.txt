@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /#features
+Allow: /#algorithms
+
+Disallow: /dashboard
+Disallow: /visualize/
+
+Sitemap: https://sortsphere-xi.vercel.app/sitemap.xml

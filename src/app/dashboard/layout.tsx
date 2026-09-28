@@ -21,7 +21,7 @@ export default function DashboardLayout({
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 50,
+          zIndex: 1000,
           height: "60px",
           display: "flex",
           alignItems: "center",
