@@ -48,7 +48,10 @@ export function StepExplainer({
 
   const borderColor = eventColor[explanation.emoji] ?? "#6366f1";
 
+  // ── FINISHED STATE ──
   if (isFinished) {
+    const sortedArray = frame?.array ?? [];
+
     return (
       <div
         style={{
@@ -57,38 +60,200 @@ export function StepExplainer({
           background: "rgba(16, 185, 129, 0.06)",
           border: "1px solid rgba(16, 185, 129, 0.25)",
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
           gap: "1rem",
         }}
       >
-        <span style={{ fontSize: "1.8rem" }}>🎉</span>
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-syne)",
-              fontWeight: 700,
-              fontSize: "1rem",
-              color: "#10b981",
-              marginBottom: "0.25rem",
-            }}
-          >
-            Array sorted successfully!
-          </p>
-          <p
-            style={{
-              fontSize: "0.78rem",
-              color: "#64748b",
-              fontFamily: "var(--font-geist)",
-            }}
-          >
-            The algorithm completed in {totalFrames - 1} steps. Press ⟳ Replay
-            or Randomize to try again.
-          </p>
+        {/* Top row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <span style={{ fontSize: "1.8rem" }}>🎉</span>
+          <div>
+            <p
+              style={{
+                fontFamily: "var(--font-syne)",
+                fontWeight: 700,
+                fontSize: "1rem",
+                color: "#10b981",
+                marginBottom: "0.25rem",
+              }}
+            >
+              Array sorted successfully!
+            </p>
+            <p
+              style={{
+                fontSize: "0.78rem",
+                color: "#64748b",
+                fontFamily: "var(--font-geist)",
+              }}
+            >
+              Completed in {totalFrames - 1} steps using {totalFrames - 1}{" "}
+              operations.
+            </p>
+          </div>
         </div>
+
+        {/* Sorted result */}
+        {sortedArray.length > 0 && (
+          <div
+            style={{
+              padding: "0.85rem 1rem",
+              borderRadius: "8px",
+              background: "rgba(7, 7, 26, 0.6)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+            }}
+          >
+            {/* Label */}
+            <p
+              style={{
+                fontSize: "0.58rem",
+                fontFamily: "var(--font-mono)",
+                color: "#10b981",
+                letterSpacing: "0.1em",
+                marginBottom: "0.6rem",
+              }}
+            >
+              SORTED RESULT
+            </p>
+
+            {/* Array values */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-mono)",
+                  color: "#334155",
+                  marginRight: "2px",
+                }}
+              >
+                [
+              </span>
+
+              {sortedArray.map((val, i) => (
+                <span
+                  key={i}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "#10b981",
+                      padding: "0.15rem 0.4rem",
+                      borderRadius: "4px",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                    }}
+                  >
+                    {val}
+                  </span>
+                  {i < sortedArray.length - 1 && (
+                    <span
+                      style={{
+                        color: "#334155",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      ,
+                    </span>
+                  )}
+                </span>
+              ))}
+
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-mono)",
+                  color: "#334155",
+                  marginLeft: "2px",
+                }}
+              >
+                ]
+              </span>
+            </div>
+
+            {/* Stats row */}
+            <div
+              style={{
+                display: "flex",
+                gap: "1.5rem",
+                marginTop: "0.75rem",
+                paddingTop: "0.75rem",
+                borderTop: "1px solid rgba(16,185,129,0.1)",
+                flexWrap: "wrap",
+              }}
+            >
+              {[
+                {
+                  label: "ELEMENTS",
+                  value: sortedArray.length,
+                  color: "#10b981",
+                },
+                { label: "MIN", value: sortedArray[0], color: "#818cf8" },
+                {
+                  label: "MAX",
+                  value: sortedArray[sortedArray.length - 1],
+                  color: "#818cf8",
+                },
+                { label: "STEPS", value: totalFrames - 1, color: "#fbbf24" },
+              ].map(({ label, value, color }) => (
+                <div key={label}>
+                  <p
+                    style={{
+                      fontSize: "0.55rem",
+                      fontFamily: "var(--font-mono)",
+                      color: "#475569",
+                      letterSpacing: "0.08em",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "0.85rem",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 600,
+                      color,
+                    }}
+                  >
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hint */}
+        <p
+          style={{
+            fontSize: "0.68rem",
+            fontFamily: "var(--font-mono)",
+            color: "#334155",
+            textAlign: "center",
+          }}
+        >
+          Press ⟳ Replay to watch again · Randomize for a new array · Change
+          algorithm from Dashboard
+        </p>
       </div>
     );
   }
 
+  // ── RUNNING STATE ──
   return (
     <div
       style={{
@@ -165,7 +330,7 @@ export function StepExplainer({
         {explanation.detail}
       </p>
 
-      {/* Array state preview — shows current values */}
+      {/* Array state preview */}
       {frame && (
         <div
           style={{
