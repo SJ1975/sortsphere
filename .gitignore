@@ -44,3 +44,6 @@ next-env.d.ts
 .vercel
 .env*
 VercelToken.txt
+
+# allow the env template to be committed
+!.env.example

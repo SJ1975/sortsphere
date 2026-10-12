@@ -194,16 +194,22 @@ Pre-computing all frames gives O(1) seek — scrubbing and speed control are tri
 ### Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/sortsphere.git
+git clone https://github.com/SJ1975/sortsphere.git
 cd sortsphere
 npm install
 ```
 
 ### Environment Setup
 
-Create `.env.local`:
+Copy the template and add your own Clerk keys (create a free app at [clerk.com](https://clerk.com) and copy the keys from its dashboard):
 
 ```bash
+cp .env.example .env.local
+```
+
+Then open `.env.local` and fill in:
+
+```
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key
 CLERK_SECRET_KEY=sk_test_your_key
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
@@ -211,6 +217,8 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 ```
+
+`.env.local` is ignored by Git. Never commit it.
 
 ### Run Locally
 
@@ -247,4 +255,4 @@ git push origin main
 
 ## License
 
-MIT © 2025
+MIT © 2026
