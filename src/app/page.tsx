@@ -211,7 +211,7 @@ export default function LandingPage() {
                   <>
                     {/* Primary — goes straight to visualizer, no login needed */}
                     <Link
-                      href="/visualize/bubble"
+                      href="visualize/bubble"
                       className="btn-primary"
                       style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
                     >
