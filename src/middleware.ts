@@ -1,9 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// Define the routes you want to protect
+// Define the routes you want to protect 
+// Only dashboard requires login now
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
-  '/visualize(.*)',
+  // '/visualize(.*)',                           // Visualizer is PUBLIC — anyone can see it
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
