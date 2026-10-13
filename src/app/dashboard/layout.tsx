@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
@@ -10,18 +10,17 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isVisualizer = pathname.includes("/visualize");
+  const { isSignedIn } = useAuth();
 
   return (
     <div style={{ minHeight: "100vh", background: "#07071a" }}>
-      {/* App navbar */}
       <nav
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 1000,
+          zIndex: 200,
           height: "60px",
           display: "flex",
           alignItems: "center",
@@ -56,7 +55,6 @@ export default function DashboardLayout({
               fontWeight: 800,
               color: "white",
               fontFamily: "var(--font-syne)",
-              boxShadow: "0 0 12px rgba(99,102,241,0.3)",
             }}
           >
             S
@@ -75,28 +73,65 @@ export default function DashboardLayout({
           </span>
         </Link>
 
-        {/* Nav links */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <Link
-            href="/dashboard"
-            style={{
-              fontSize: "0.85rem",
-              fontFamily: "var(--font-geist)",
-              textDecoration: "none",
-              color: !isVisualizer ? "#f1f5f9" : "#64748b",
-              fontWeight: !isVisualizer ? 500 : 400,
-              transition: "color 0.2s",
-            }}
-          >
-            Dashboard
-          </Link>
+        {/* Right side — auth aware */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {isSignedIn ? (
+            <>
+              {/* Only show Dashboard link when on visualizer */}
+              {pathname.includes("/visualize") && (
+                <Link
+                  href="/dashboard"
+                  style={{
+                    fontSize: "0.85rem",
+                    fontFamily: "var(--font-geist)",
+                    color: "#64748b",
+                    textDecoration: "none",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.color = "#f1f5f9")}
+                  onMouseOut={(e) => (e.currentTarget.style.color = "#64748b")}
+                >
+                  Dashboard
+                </Link>
+              )}
+              <UserButton />
+            </>
+          ) : (
+            /* Not logged in — show sign in prompt */
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+            >
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-mono)",
+                  color: "#475569",
+                }}
+              >
+                Save favorites →
+              </span>
+              <SignInButton mode="modal">
+                <button
+                  style={{
+                    padding: "0.4rem 1rem",
+                    borderRadius: "7px",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    border: "none",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-geist)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+            </div>
+          )}
         </div>
-
-        {/* User button */}
-        <UserButton />
       </nav>
 
-      {/* Page content */}
       <main style={{ paddingTop: "60px", minHeight: "100vh" }}>{children}</main>
     </div>
   );

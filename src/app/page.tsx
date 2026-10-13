@@ -209,21 +209,24 @@ export default function LandingPage() {
                   </Link>
                 ) : (
                   <>
-                    <SignUpButton mode="modal">
-                      <button
-                        className="btn-primary"
-                        style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
-                      >
-                        Start for Free →
-                      </button>
-                    </SignUpButton>
+                    {/* Primary — goes straight to visualizer, no login needed */}
                     <Link
-                      href="/#algorithms"
-                      className="btn-ghost"
+                      href="/visualize/bubble"
+                      className="btn-primary"
                       style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
                     >
-                      View Algorithms
+                      Try it Free →
                     </Link>
+
+                    {/* Secondary — sign up for dashboard + favorites */}
+                    <SignUpButton mode="modal">
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
+                      >
+                        Create Account
+                      </button>
+                    </SignUpButton>
                   </>
                 )}
               </motion.div>
@@ -709,6 +712,7 @@ export default function LandingPage() {
                         display: "flex",
                         flexDirection: "column",
                         gap: "0.4rem",
+                        marginBottom: "1.25rem",
                       }}
                     >
                       {[
@@ -763,6 +767,41 @@ export default function LandingPage() {
                         );
                       })}
                     </div>
+
+                    {/* ── Try it button — NO login needed ── */}
+                    <Link
+                      href={`/visualize/${key}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0.6rem",
+                        borderRadius: "8px",
+                        background: "rgba(99, 102, 241, 0.1)",
+                        border: "1px solid rgba(99, 102, 241, 0.25)",
+                        color: "#818cf8",
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        fontFamily: "var(--font-geist)",
+                        textDecoration: "none",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #6366f1, #8b5cf6)";
+                        e.currentTarget.style.color = "white";
+                        e.currentTarget.style.borderColor = "transparent";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(99, 102, 241, 0.1)";
+                        e.currentTarget.style.color = "#818cf8";
+                        e.currentTarget.style.borderColor =
+                          "rgba(99, 102, 241, 0.25)";
+                      }}
+                    >
+                      Try it now — no login needed →
+                    </Link>
                   </motion.div>
                 );
               })}
