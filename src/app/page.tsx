@@ -200,25 +200,31 @@ export default function LandingPage() {
                 style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}
               >
                 {isSignedIn ? (
-                  <Link
-                    href="/dashboard"
-                    className="btn-primary"
-                    style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
-                  >
-                    Open Dashboard →
-                  </Link>
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="btn-primary"
+                      style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
+                    >
+                      Open Dashboard →
+                    </Link>
+                    <Link
+                      href="/compare"
+                      className="btn-ghost"
+                      style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
+                    >
+                      Compare Algorithms
+                    </Link>
+                  </>
                 ) : (
                   <>
-                    {/* Primary — goes straight to visualizer, no login needed */}
                     <Link
-                      href="visualize/bubble"
+                      href="/visualize/bubble"
                       className="btn-primary"
                       style={{ fontSize: "1rem", padding: "0.875rem 2rem" }}
                     >
                       Try it Free →
                     </Link>
-
-                    {/* Secondary — sign up for dashboard + favorites */}
                     <SignUpButton mode="modal">
                       <button
                         className="btn-ghost"
@@ -768,7 +774,7 @@ export default function LandingPage() {
                       })}
                     </div>
 
-                    {/* ── Try it button — NO login needed ── */}
+                    {/* ── Button changes based on auth state ── */}
                     <Link
                       href={`/visualize/${key}`}
                       style={{
@@ -800,7 +806,9 @@ export default function LandingPage() {
                           "rgba(99, 102, 241, 0.25)";
                       }}
                     >
-                      Try it now — no login needed →
+                      {isSignedIn
+                        ? "Visualize →"
+                        : "Try it now — no login needed →"}
                     </Link>
                   </motion.div>
                 );
