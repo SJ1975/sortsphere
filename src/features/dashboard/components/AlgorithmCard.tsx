@@ -221,25 +221,28 @@ export function AlgorithmCard({
           alignItems: "center",
           justifyContent: "center",
           gap: "0.35rem",
-          padding: "0.6rem",
+          padding: "0.65rem",
           borderRadius: "8px",
-          background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-          color: "white",
+          background: "rgba(99, 102, 241, 0.15)",
+          border: "1px solid rgba(99, 102, 241, 0.3)",
+          color: "#818cf8",
           fontWeight: 600,
           fontSize: "0.85rem",
           fontFamily: "var(--font-geist)",
           textDecoration: "none",
-          transition: "opacity 0.2s, transform 0.15s",
-          boxShadow: "0 4px 16px rgba(99,102,241,0.28)",
+          transition: "all 0.2s ease",
           marginTop: "auto",
         }}
         onMouseOver={(e) => {
-          e.currentTarget.style.opacity = "0.88";
-          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.background =
+            "linear-gradient(135deg, #6366f1, #8b5cf6)";
+          e.currentTarget.style.color = "white";
+          e.currentTarget.style.borderColor = "transparent";
         }}
         onMouseOut={(e) => {
-          e.currentTarget.style.opacity = "1";
-          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)";
+          e.currentTarget.style.color = "#818cf8";
+          e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
         }}
       >
         Visualize →

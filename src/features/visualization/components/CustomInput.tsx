@@ -1,23 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { SortingEngine } from "@/features/sorting/engine";
 import { MAX_ARRAY_SIZE } from "@/lib/constants";
 
 interface CustomInputProps {
   onSubmit: (input: string) => boolean;
   onRandomize: () => void;
   isPlaying: boolean;
+  maxSize?: number; // ← set when the 3D view limits the array size
 }
 
 export function CustomInput({
   onSubmit,
   onRandomize,
   isPlaying,
+  maxSize,
 }: CustomInputProps) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const limit = maxSize ?? MAX_ARRAY_SIZE;
 
   const handleSubmit = () => {
     if (!value.trim()) {
@@ -31,7 +34,9 @@ export function CustomInput({
       setTimeout(() => setSuccess(false), 2000);
     } else {
       setError(
-        `Enter 2–${MAX_ARRAY_SIZE} comma-separated numbers between 1 and 999.`,
+        `Enter 2–${limit} comma-separated numbers between 1 and 999.${
+          maxSize ? " Switch to 2D for larger arrays." : ""
+        }`,
       );
       setSuccess(false);
     }
@@ -45,6 +50,11 @@ export function CustomInput({
     if (valid) {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
+    } else {
+      setSuccess(false);
+      setError(
+        `This example needs more than ${limit} elements. Switch to 2D to use it.`,
+      );
     }
   };
 
@@ -83,6 +93,7 @@ export function CustomInput({
           }}
         >
           CUSTOM INPUT — TYPE YOUR OWN ARRAY
+          {maxSize ? ` (MAX ${maxSize} IN 3D)` : ""}
         </p>
         <button
           onClick={onRandomize}

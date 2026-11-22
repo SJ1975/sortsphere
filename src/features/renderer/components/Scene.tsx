@@ -21,7 +21,12 @@ interface Scene3DProps {
 export function Scene3D({ frame, originalArray, sortedIndices }: Scene3DProps) {
   return (
     <Canvas
-      style={{ background: "#07071a" }}
+      style={{
+        background: "#07071a",
+        position: "absolute",
+        inset: 0,
+        zIndex: 0,
+      }}
       gl={{
         antialias: true,
         alpha: false,

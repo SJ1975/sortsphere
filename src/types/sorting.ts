@@ -38,11 +38,27 @@ export interface SortMetrics {
   swaps: number;               // How many times we swapped/wrote elements
 }
 
+// Extra info an algorithm can attach to a frame so a 3D scene
+// can show HOW the algorithm is working (pointers, held element, etc.)
+export interface SortState {
+  pass?: number;       // bubble: current pass
+  i?: number;
+  j?: number;
+  keyId?: number;      // insertion: id of the element lifted out of the row
+  hole?: number;       // insertion: position the lifted element will drop into
+  minIndex?: number;
+  pivotIndex?: number;
+  low?: number;
+  high?: number;
+  heapSize?: number;
+}
 
 export interface SortFrame {
-  array: number[];             // Full array state at this moment
-  event: SortEvent;            // What happened to produce this state
-  metrics: SortMetrics;        // Running totals at this moment
+  array: number[];
+  event: SortEvent;
+  metrics: SortMetrics;
+  ids?: number[];      // ids[position] = which original element sits there
+  state?: SortState;
 }
 
 // Sorting algorithms

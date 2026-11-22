@@ -6,8 +6,6 @@ import { mergeSort } from '../algorithms/merge';
 import { quickSort } from '../algorithms/quick';
 import { heapSort } from '../algorithms/heap';
 
-// Registry maps algorithm keys to their functions
-// Adding a new algorithm = adding one line here
 const ALGORITHM_REGISTRY: Record<AlgorithmKey, SortAlgorithm> = {
   bubble: bubbleSort,
   selection: selectionSort,
@@ -18,15 +16,34 @@ const ALGORITHM_REGISTRY: Record<AlgorithmKey, SortAlgorithm> = {
 };
 
 export class SortingEngine {
-
-  // Generate all animation frames for a given algorithm + array
   static generateFrames(algorithm: AlgorithmKey, array: number[]): SortFrame[] {
     const fn = ALGORITHM_REGISTRY[algorithm];
     if (!fn) throw new Error(`Unknown algorithm: ${algorithm}`);
-    return fn([...array]); // Pass a copy - algorithms must not mutate input
+    const frames = fn([...array]);
+    return SortingEngine.attachIds(algorithm, frames, array.length);
   }
 
-  // Generate a random array of given size
+  // Algorithms that already provide ids (bubble, insertion) are left alone.
+  // For swap-only algorithms we derive ids by replaying the SWAP events.
+  // Merge sort overwrites values instead of swapping, so it is skipped.
+  private static attachIds(
+    algorithm: AlgorithmKey,
+    frames: SortFrame[],
+    n: number
+  ): SortFrame[] {
+    if (algorithm === 'merge') return frames;
+    if (frames.length === 0 || frames[0].ids) return frames;
+
+    const ids = Array.from({ length: n }, (_, i) => i);
+    return frames.map((frame) => {
+      if (frame.event.type === 'SWAP' && frame.event.indices.length === 2) {
+        const [a, b] = frame.event.indices;
+        [ids[a], ids[b]] = [ids[b], ids[a]];
+      }
+      return { ...frame, ids: [...ids] };
+    });
+  }
+
   static generateArray(size: number, min = 5, max = 100): number[] {
     return Array.from(
       { length: size },
@@ -34,7 +51,6 @@ export class SortingEngine {
     );
   }
 
-  // Parse user input like "5, 3, 8, 1, 9" into [5, 3, 8, 1, 9]
   static parseCustomInput(input: string, maxSize: number): number[] | null {
     try {
       const values = input
@@ -49,7 +65,6 @@ export class SortingEngine {
     }
   }
 
-  // Get all registered algorithm keys
   static getAlgorithmKeys(): AlgorithmKey[] {
     return Object.keys(ALGORITHM_REGISTRY) as AlgorithmKey[];
   }

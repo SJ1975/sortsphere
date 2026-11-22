@@ -15,9 +15,13 @@ import { StepExplainer } from "@/features/visualization/components/StepExplainer
 import { PseudoCode } from "@/features/visualization/components/PseudoCode";
 import { CustomInput } from "@/features/visualization/components/CustomInput";
 import { ComplexityExplainer } from "@/features/visualization/components/ComplexityExplainer";
+import { getMax3DSize } from "@/features/renderer/scenes/config";
 
-const Scene3D = dynamic(
-  () => import("@/features/renderer/components/Scene").then((m) => m.Scene3D),
+const AlgorithmScene3D = dynamic(
+  () =>
+    import("@/features/renderer/scenes/AlgorithmScene3D").then(
+      (m) => m.AlgorithmScene3D,
+    ),
   {
     ssr: false,
     loading: () => (
@@ -50,11 +54,15 @@ export default function VisualizePage() {
   const algorithmKey = params.algorithm as AlgorithmKey;
   const isValid = ALGORITHM_KEYS.includes(algorithmKey);
   const info = isValid ? ALGORITHM_INFO[algorithmKey] : null;
+  const max3D = getMax3DSize(algorithmKey);
 
   const engine = useSortingEngine();
   const { isFavorite, toggleFavorite } = usePreferencesStore();
   const [viewMode, setViewMode] = useState<ViewMode>("3d");
   const [ready, setReady] = useState(false);
+
+  // Cap only applies while the 3D view is active and the algorithm has its own scene
+  const sizeCap = viewMode === "3d" && max3D ? max3D : undefined;
 
   const sortedIndices = useMemo(() => {
     if (!ready) return new Set<number>();
@@ -80,6 +88,22 @@ export default function VisualizePage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // If 3D is active and the array is larger than this scene supports, trim it
+  useEffect(() => {
+    if (sizeCap && engine.arraySize > sizeCap) {
+      engine.handleSizeChange(sizeCap);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizeCap, engine.arraySize]);
+
+  // Wraps the engine's custom input so the 3D cap is enforced.
+  // Returning false makes CustomInput show its error message.
+  const handleCustomInput = (input: string): boolean => {
+    const count = input.split(",").filter((s) => s.trim() !== "").length;
+    if (sizeCap && count > sizeCap) return false;
+    return engine.handleCustomInput(input);
+  };
 
   if (!isValid || !info) {
     return (
@@ -110,16 +134,16 @@ export default function VisualizePage() {
     // ── OUTER: full height, flex column, NO overflow ──
     <div
       style={{
-        height: "calc(100vh - 60px)", // subtract dashboard navbar height
+        height: "calc(100vh - 60px)",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden", // prevent outer scroll
+        overflow: "hidden",
       }}
     >
       {/* ── Sub-header: STATIC at top, never moves ── */}
       <div
         style={{
-          flexShrink: 0, // never shrinks
+          flexShrink: 0,
           padding: "0.75rem 2rem",
           display: "flex",
           alignItems: "center",
@@ -244,7 +268,7 @@ export default function VisualizePage() {
       <div
         style={{
           flex: 1,
-          overflowY: "auto", // only this area scrolls
+          overflowY: "auto",
           padding: "1.25rem 2rem 2rem",
         }}
       >
@@ -259,9 +283,10 @@ export default function VisualizePage() {
         >
           {/* Custom input */}
           <CustomInput
-            onSubmit={engine.handleCustomInput}
+            onSubmit={handleCustomInput}
             onRandomize={engine.handleRandomize}
             isPlaying={engine.isPlaying}
+            maxSize={sizeCap}
           />
 
           {/* Visualization area */}
@@ -345,10 +370,12 @@ export default function VisualizePage() {
               )}
 
             {viewMode === "3d" ? (
-              <Scene3D
+              <AlgorithmScene3D
+                algorithm={algorithmKey}
                 frame={engine.currentFrame}
                 originalArray={engine.originalArray}
                 sortedIndices={sortedIndices}
+                autoRotate={!engine.isPlaying && engine.currentFrameIndex === 0}
               />
             ) : (
               <div style={{ height: "100%", padding: "1.5rem 1rem 1rem" }}>
@@ -391,6 +418,7 @@ export default function VisualizePage() {
             setSpeed={engine.setSpeed}
             seek={engine.seek}
             handleSizeChange={engine.handleSizeChange}
+            maxSize={sizeCap}
           />
 
           {/* Bottom panels */}

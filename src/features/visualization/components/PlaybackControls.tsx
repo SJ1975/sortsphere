@@ -11,6 +11,7 @@ interface PlaybackControlsProps {
   arraySize: number;
   currentFrameIndex: number;
   totalFrames: number;
+  maxSize?: number;
   handlePlay: () => void;
   handlePause: () => void;
   handleReset: () => void;
@@ -27,6 +28,7 @@ export function PlaybackControls({
   arraySize,
   currentFrameIndex,
   totalFrames,
+  maxSize,
   handlePlay,
   handlePause,
   handleReset,
@@ -117,7 +119,6 @@ export function PlaybackControls({
       >
         {/* Left: playback buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {/* Randomize */}
           <button
             onClick={handleRandomize}
             style={ghostBtn}
@@ -126,12 +127,10 @@ export function PlaybackControls({
             ⟳
           </button>
 
-          {/* Reset */}
           <button onClick={handleReset} style={ghostBtn} title="Back to start">
             ⏮
           </button>
 
-          {/* Play / Pause */}
           <button
             onClick={isPlaying ? handlePause : handlePlay}
             style={{ ...primaryBtn, minWidth: "90px" }}
@@ -194,7 +193,7 @@ export function PlaybackControls({
             <input
               type="range"
               min={5}
-              max={80}
+              max={maxSize ?? 80} // ← uses the 3D cap when set
               value={arraySize}
               disabled={isPlaying}
               onChange={(e) => handleSizeChange(parseInt(e.target.value))}
@@ -205,6 +204,17 @@ export function PlaybackControls({
                 opacity: isPlaying ? 0.5 : 1,
               }}
             />
+            {maxSize && (
+              <span
+                style={{
+                  fontSize: "0.58rem",
+                  fontFamily: "var(--font-mono)",
+                  color: "#475569",
+                }}
+              >
+                max {maxSize} in 3D
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -73,37 +73,90 @@ export default function DashboardLayout({
           </span>
         </Link>
 
-        {/* Right side — auth aware */}
+        {/* ── Center nav links ── */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "2rem",
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {/* Dashboard link */}
+          <Link
+            href="/dashboard"
+            style={{
+              fontSize: "0.85rem",
+              fontFamily: "var(--font-geist)",
+              textDecoration: "none",
+              color: pathname === "/dashboard" ? "#f1f5f9" : "#64748b",
+              fontWeight: pathname === "/dashboard" ? 500 : 400,
+              transition: "color 0.2s",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = "#f1f5f9")}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color =
+                pathname === "/dashboard" ? "#f1f5f9" : "#64748b";
+            }}
+          >
+            Dashboard
+          </Link>
+
+          {/* Compare link */}
+          <Link
+            href="/compare"
+            style={{
+              fontSize: "0.85rem",
+              fontFamily: "var(--font-geist)",
+              textDecoration: "none",
+              color: pathname === "/compare" ? "#f1f5f9" : "#64748b",
+              fontWeight: pathname === "/compare" ? 500 : 400,
+              transition: "color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = "#f1f5f9")}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color =
+                pathname === "/compare" ? "#f1f5f9" : "#64748b";
+            }}
+          >
+            {/* VS badge */}
+            <span
+              style={{
+                fontSize: "0.58rem",
+                padding: "0.1rem 0.4rem",
+                borderRadius: "4px",
+                background:
+                  pathname === "/compare"
+                    ? "rgba(34,211,238,0.2)"
+                    : "rgba(34,211,238,0.1)",
+                color: "#22d3ee",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600,
+                letterSpacing: "0.05em",
+              }}
+            >
+              VS
+            </span>
+            Compare
+          </Link>
+        </div>
+
+        {/* ── Right side — auth aware ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           {isSignedIn ? (
-            <>
-              {/* Only show Dashboard link when on visualizer */}
-              {pathname.includes("/visualize") && (
-                <Link
-                  href="/dashboard"
-                  style={{
-                    fontSize: "0.85rem",
-                    fontFamily: "var(--font-geist)",
-                    color: "#64748b",
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.color = "#f1f5f9")}
-                  onMouseOut={(e) => (e.currentTarget.style.color = "#64748b")}
-                >
-                  Dashboard
-                </Link>
-              )}
-              <UserButton />
-            </>
+            <UserButton />
           ) : (
-            /* Not logged in — show sign in prompt */
             <div
               style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
             >
               <span
                 style={{
-                  fontSize: "0.75rem",
+                  fontSize: "0.72rem",
                   fontFamily: "var(--font-mono)",
                   color: "#475569",
                 }}
@@ -122,6 +175,7 @@ export default function DashboardLayout({
                     fontSize: "0.8rem",
                     fontFamily: "var(--font-geist)",
                     cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
                   }}
                 >
                   Sign In
