@@ -6,6 +6,14 @@ import { Bar3D } from './shared/Bar3D';
 import { GlideBox } from './shared/GlideBox';
 import { Marker3D } from './shared/Marker3D';
 import { SceneProps } from './shared/types';
+"use client";
+
+import { useMemo } from "react";
+import { Stage } from "./shared/Stage";
+import { Bar3D } from "./shared/Bar3D";
+import { GlideBox } from "./shared/GlideBox";
+import { Marker3D } from "./shared/Marker3D";
+import { SceneProps } from "./shared/types";
 import {
   MAX_BAR_HEIGHT,
   barHeight,
@@ -16,6 +24,10 @@ import {
 import { getBarColor } from '../config/materials';
 
 const MIN_COLOR = '#22d3ee';
+} from "./shared/layout";
+import { getBarColor } from "../config/materials";
+
+const MIN_COLOR = "#22d3ee";
 
 export function SelectionScene({
   frame,
@@ -34,6 +46,7 @@ export function SelectionScene({
 
   const minId = state?.minId;
   const scanIndex = event?.type === 'COMPARE' ? state?.j : undefined;
+  const scanIndex = event?.type === "COMPARE" ? state?.j : undefined;
 
   const sortedList = Array.from(sortedIndices).filter((i) => i < n);
   const zoneEnd = sortedList.length ? Math.max(...sortedList) : -1;
@@ -42,6 +55,7 @@ export function SelectionScene({
     minId !== undefined
       ? barHeight(originalArray[minId], maxVal) + 1.7
       : 0;
+    minId !== undefined ? barHeight(originalArray[minId], maxVal) + 1.7 : 0;
 
   return (
     <Stage width={layout.width} autoRotate={autoRotate}>
@@ -87,6 +101,9 @@ export function SelectionScene({
         const index = positions[id];
         const isMin = minId === id && !sortedIndices.has(index);
         const color = isMin ? MIN_COLOR : getBarColor(index, event, sortedIndices);
+        const color = isMin
+          ? MIN_COLOR
+          : getBarColor(index, event, sortedIndices);
         const scanned = scanIndex !== undefined && index === scanIndex;
 
         return (
@@ -104,4 +121,5 @@ export function SelectionScene({
       })}
     </Stage>
   );
+}
 }

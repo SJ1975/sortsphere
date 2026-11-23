@@ -52,6 +52,9 @@ export interface SortState {
   minId?: number;
   pivotIndex?: number;
   pivotId?: number;
+  minId?: number;      // selection: id of the smallest element found so far
+  pivotIndex?: number;
+  pivotId?: number;    // quick: id of the pivot element
   low?: number;
   mid?: number;
   high?: number;

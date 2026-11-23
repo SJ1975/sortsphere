@@ -73,6 +73,7 @@ function getLines(
       hint =
         frame?.event.indices[1] === state.high
           ? "The pivot drops into its final position."
+          ? `The pivot drops into its final position.`
           : `A value ≤ ${pivot} moves into the cyan zone.`;
     }
     return { title: `Pivot ${pivot}`, hint };

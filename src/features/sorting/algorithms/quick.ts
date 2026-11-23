@@ -1,91 +1,89 @@
-import { SortFrame, SortMetrics } from '@/types/sorting';
+import { SortEvent, SortFrame, SortMetrics, SortState } from '@/types/sorting';
 
 export function quickSort(inputArray: number[]): SortFrame[] {
   const frames: SortFrame[] = [];
   const array = [...inputArray];
+  const ids = array.map((_, i) => i);
   const metrics: SortMetrics = { comparisons: 0, swaps: 0 };
   const sortedIndices: number[] = [];
 
-  function partition(arr: number[], low: number, high: number): number {
-    const pivot = arr[high];   // Last element is pivot
-
-    // PARTITION: highlight the pivot
+  const push = (event: SortEvent, state?: SortState) => {
     frames.push({
-      array: [...arr],
-      event: {
-        type: 'PARTITION',
-        indices: [high],
-        metadata: { pivotIndex: high },
-      },
+      array: [...array],
+      ids: [...ids],
+      event,
       metrics: { ...metrics },
+      state,
     });
+  };
 
-    let i = low - 1;   // Boundary of smaller elements
+  const swap = (a: number, b: number) => {
+    [array[a], array[b]] = [array[b], array[a]];
+    [ids[a], ids[b]] = [ids[b], ids[a]];
+  };
+
+  function partition(low: number, high: number): number {
+    const pivot = array[high];
+    const pivotId = ids[high];
+
+    push(
+      { type: 'PARTITION', indices: [high], metadata: { pivotIndex: high } },
+      { low, high, i: low - 1, pivotId, pivotIndex: high }
+    );
+
+    let i = low - 1;
 
     for (let j = low; j < high; j++) {
-      // COMPARE: is this element <= pivot?
       metrics.comparisons++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'COMPARE', indices: [j, high] },
-        metrics: { ...metrics },
-      });
 
-      if (arr[j] <= pivot) {
+      // i shown here is where the "≤ pivot" zone ends after this step
+      const small = array[j] <= pivot;
+      push(
+        { type: 'COMPARE', indices: [j, high] },
+        { low, high, i: small ? i + 1 : i, j, pivotId, pivotIndex: high }
+      );
+
+      if (small) {
         i++;
         if (i !== j) {
-          // SWAP: move smaller element to left partition
-          [arr[i], arr[j]] = [arr[j], arr[i]];
+          swap(i, j);
           metrics.swaps++;
-          frames.push({
-            array: [...arr],
-            event: { type: 'SWAP', indices: [i, j] },
-            metrics: { ...metrics },
-          });
+          push(
+            { type: 'SWAP', indices: [i, j] },
+            { low, high, i, j, pivotId, pivotIndex: high }
+          );
         }
       }
     }
 
-    // SWAP: place pivot in its correct final position
-    [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+    swap(i + 1, high);
     metrics.swaps++;
-    frames.push({
-      array: [...arr],
-      event: { type: 'SWAP', indices: [i + 1, high] },
-      metrics: { ...metrics },
-    });
+    push(
+      { type: 'SWAP', indices: [i + 1, high] },
+      { low, high, i, j: high, pivotId, pivotIndex: i + 1 }
+    );
 
-    // Pivot is now in its sorted position
-    const pivotFinalIndex = i + 1;
-    sortedIndices.push(pivotFinalIndex);
-    frames.push({
-      array: [...arr],
-      event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-      metrics: { ...metrics },
-    });
+    const p = i + 1;
+    sortedIndices.push(p);
+    push(
+      { type: 'MARK_SORTED', indices: [...sortedIndices] },
+      { low, high, i, pivotId, pivotIndex: p }
+    );
 
-    return pivotFinalIndex;
+    return p;
   }
 
-  function sort(arr: number[], low: number, high: number): void {
+  function sort(low: number, high: number): void {
     if (low < high) {
-      const pi = partition(arr, low, high);
-      sort(arr, low, pi - 1);    // Sort left of pivot
-      sort(arr, pi + 1, high);   // Sort right of pivot
-    } else if (low === high) {
-      // Single element partition - it's sorted
-      if (!sortedIndices.includes(low)) {
-        sortedIndices.push(low);
-        frames.push({
-          array: [...arr],
-          event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-          metrics: { ...metrics },
-        });
-      }
+      const p = partition(low, high);
+      sort(low, p - 1);
+      sort(p + 1, high);
+    } else if (low === high && !sortedIndices.includes(low)) {
+      sortedIndices.push(low);
+      push({ type: 'MARK_SORTED', indices: [...sortedIndices] });
     }
   }
 
-  sort(array, 0, array.length - 1);
-
+  sort(0, array.length - 1);
   return frames;
 }

@@ -39,6 +39,8 @@ export function AlgorithmScene3D({
   else if (algorithm === "heap") scene = <HeapScene {...sceneProps} />;
 
   // Safety net: generic scene if an algorithm has no custom scene
+
+  // No custom scene yet (merge, heap) → generic 3D scene
   if (!scene) {
     return (
       <Scene3D
