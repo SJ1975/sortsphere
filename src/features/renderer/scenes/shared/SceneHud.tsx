@@ -15,6 +15,7 @@ function getLines(
   originalArray: number[],
 ): { title: string; hint: string } {
   const state = frame?.state;
+  const type = frame?.event.type;
 
   if (algorithm === "bubble") {
     const pass = state?.pass;
@@ -35,6 +36,46 @@ function getLines(
       title: "Insertion Sort",
       hint: "Each element is pulled out and dropped into the sorted hand.",
     };
+  }
+
+  if (algorithm === "selection") {
+    if (state?.i === undefined) {
+      return {
+        title: "Selection Sort",
+        hint: "Scan for the smallest value, then move it to the front.",
+      };
+    }
+    const minVal =
+      state.minId !== undefined ? originalArray[state.minId] : undefined;
+    let hint = "The sorted zone grows by one.";
+    if (type === "COMPARE") {
+      hint = `Scanning the unsorted part. Cyan flag = smallest so far (${minVal}).`;
+    } else if (type === "SWAP") {
+      hint = `The smallest value ${minVal} moves to the front of the unsorted zone.`;
+    }
+    return { title: `Round ${state.i + 1}`, hint };
+  }
+
+  if (algorithm === "quick") {
+    if (state?.pivotId === undefined) {
+      return {
+        title: "Quick Sort",
+        hint: "Pick a pivot, then split the other values around it.",
+      };
+    }
+    const pivot = originalArray[state.pivotId];
+    let hint = `Pivot ${pivot} is in its final place. Each side is sorted on its own.`;
+    if (type === "PARTITION") {
+      hint = `Pivot ${pivot} chosen. Smaller values go left, larger go right.`;
+    } else if (type === "COMPARE") {
+      hint = `Is the scanned value ≤ ${pivot}? The cyan line marks the pivot height.`;
+    } else if (type === "SWAP") {
+      hint =
+        frame?.event.indices[1] === state.high
+          ? `The pivot drops into its final position.`
+          : `A value ≤ ${pivot} moves into the cyan zone.`;
+    }
+    return { title: `Pivot ${pivot}`, hint };
   }
 
   return { title: "", hint: "" };
@@ -60,7 +101,7 @@ export function SceneHud({
         borderRadius: 10,
         background: "rgba(7, 7, 26, 0.75)",
         border: "1px solid rgba(99, 102, 241, 0.18)",
-        maxWidth: 260,
+        maxWidth: 270,
       }}
     >
       <p

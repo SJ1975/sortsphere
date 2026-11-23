@@ -47,7 +47,9 @@ export interface SortState {
   keyId?: number;      // insertion: id of the element lifted out of the row
   hole?: number;       // insertion: position the lifted element will drop into
   minIndex?: number;
+  minId?: number;      // selection: id of the smallest element found so far
   pivotIndex?: number;
+  pivotId?: number;    // quick: id of the pivot element
   low?: number;
   high?: number;
   heapSize?: number;
