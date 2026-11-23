@@ -18,6 +18,7 @@ export type SortEventType =
   | 'MARK_SORTED'
   | 'PARTITION'
   | 'MERGE'
+  | 'SPLIT'
   | 'RESET';
 
 
@@ -41,16 +42,27 @@ export interface SortMetrics {
 // Extra info an algorithm can attach to a frame so a 3D scene
 // can show HOW the algorithm is working (pointers, held element, etc.)
 export interface SortState {
+  phase?: 'divide' | 'merge' | 'build' | 'extract';
   pass?: number;       // bubble: current pass
   i?: number;
   j?: number;
   keyId?: number;      // insertion: id of the element lifted out of the row
   hole?: number;       // insertion: position the lifted element will drop into
   minIndex?: number;
+  minId?: number;
   pivotIndex?: number;
+  pivotId?: number;
   low?: number;
+  mid?: number;
   high?: number;
   heapSize?: number;
+  //merge sort
+  cuts?: number[];
+  leftBuf?: number[];
+  rightBuf?: number[];
+  aId?: number;
+  bId?: number;
+  placedId?: number;
 }
 
 export interface SortFrame {

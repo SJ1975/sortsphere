@@ -4,6 +4,10 @@ import { AlgorithmKey, SortFrame } from "@/types/sorting";
 import { Scene3D } from "../components/Scene";
 import { BubbleScene } from "./BubbleScene";
 import { InsertionScene } from "./InsertionScene";
+import { SelectionScene } from "./SelectionScene";
+import { QuickScene } from "./QuickScene";
+import { MergeScene } from "./MergeScene";
+import { HeapScene } from "./HeapScene";
 import { SceneHud } from "./shared/SceneHud";
 import { getMax3DSize } from "./config";
 
@@ -28,8 +32,13 @@ export function AlgorithmScene3D({
   if (algorithm === "bubble") scene = <BubbleScene {...sceneProps} />;
   else if (algorithm === "insertion")
     scene = <InsertionScene {...sceneProps} />;
+  else if (algorithm === "selection")
+    scene = <SelectionScene {...sceneProps} />;
+  else if (algorithm === "quick") scene = <QuickScene {...sceneProps} />;
+  else if (algorithm === "merge") scene = <MergeScene {...sceneProps} />;
+  else if (algorithm === "heap") scene = <HeapScene {...sceneProps} />;
 
-  // No custom scene yet (selection, quick, merge, heap) → previous 3D scene
+  // Safety net: generic scene if an algorithm has no custom scene
   if (!scene) {
     return (
       <Scene3D

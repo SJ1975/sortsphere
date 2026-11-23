@@ -1,94 +1,95 @@
-import { SortFrame, SortMetrics } from '@/types/sorting';
+import { SortEvent, SortFrame, SortMetrics, SortState } from '@/types/sorting';
 
 export function heapSort(inputArray: number[]): SortFrame[] {
   const frames: SortFrame[] = [];
   const array = [...inputArray];
+  const ids = array.map((_, i) => i);
   const n = array.length;
   const metrics: SortMetrics = { comparisons: 0, swaps: 0 };
   const sortedIndices: number[] = [];
 
-  // Heapify subtree rooted at index i
-  // n = current heap size (shrinks as - extract maximums)
-  function heapify(arr: number[], heapSize: number, i: number): void {
-    let largest = i;           // Assume root is largest
-    const left = 2 * i + 1;   // Left child index
-    const right = 2 * i + 2;  // Right child index
+  const push = (event: SortEvent, state?: SortState) => {
+    frames.push({
+      array: [...array],
+      ids: [...ids],
+      event,
+      metrics: { ...metrics },
+      state,
+    });
+  };
 
-    // COMPARE: is left child larger than root?
+  const swap = (a: number, b: number) => {
+    [array[a], array[b]] = [array[b], array[a]];
+    [ids[a], ids[b]] = [ids[b], ids[a]];
+  };
+
+  function heapify(
+    heapSize: number,
+    i: number,
+    phase: 'build' | 'extract'
+  ): void {
+    let largest = i;
+    const left = 2 * i + 1;
+    const right = 2 * i + 2;
+
     if (left < heapSize) {
       metrics.comparisons++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'COMPARE', indices: [left, largest] },
-        metrics: { ...metrics },
-      });
-      if (arr[left] > arr[largest]) {
-        largest = left;
-      }
+      push(
+        { type: 'COMPARE', indices: [left, largest] },
+        { phase, heapSize, i }
+      );
+      if (array[left] > array[largest]) largest = left;
     }
 
-    // COMPARE: is right child larger than current largest?
     if (right < heapSize) {
       metrics.comparisons++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'COMPARE', indices: [right, largest] },
-        metrics: { ...metrics },
-      });
-      if (arr[right] > arr[largest]) {
-        largest = right;
-      }
+      push(
+        { type: 'COMPARE', indices: [right, largest] },
+        { phase, heapSize, i }
+      );
+      if (array[right] > array[largest]) largest = right;
     }
 
-    // If root is not largest, swap and continue heapifying
     if (largest !== i) {
-      [arr[i], arr[largest]] = [arr[largest], arr[i]];
+      swap(i, largest);
       metrics.swaps++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'SWAP', indices: [i, largest] },
-        metrics: { ...metrics },
-      });
-      heapify(arr, heapSize, largest);
+      push(
+        { type: 'SWAP', indices: [i, largest] },
+        { phase, heapSize, i: largest }
+      );
+      heapify(heapSize, largest, phase);
     }
   }
 
-  // Phase 1: Build max-heap (rearrange array)
-  // Start from last non-leaf node and go up
+  // Phase 1: build the max-heap
   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-    heapify(array, n, i);
+    heapify(n, i, 'build');
   }
 
-  // Phase 2: Extract elements from heap one by one
-  for (let i = n - 1; i > 0; i--) {
-    // SWAP: move current root (max) to end
-    [array[0], array[i]] = [array[i], array[0]];
+  // Phase 2: repeatedly move the maximum to the end
+  for (let end = n - 1; end > 0; end--) {
+    swap(0, end);
     metrics.swaps++;
-    frames.push({
-      array: [...array],
-      event: { type: 'SWAP', indices: [0, i] },
-      metrics: { ...metrics },
-    });
+    // heapSize is the size AFTER removal, so the moved node leaves the tree
+    push(
+      { type: 'SWAP', indices: [0, end] },
+      { phase: 'extract', heapSize: end }
+    );
 
-    // This element is now in its sorted position
-    sortedIndices.push(i);
-    frames.push({
-      array: [...array],
-      event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-      metrics: { ...metrics },
-    });
+    sortedIndices.push(end);
+    push(
+      { type: 'MARK_SORTED', indices: [...sortedIndices] },
+      { phase: 'extract', heapSize: end }
+    );
 
-    // Heapify the reduced heap
-    heapify(array, i, 0);
+    heapify(end, 0, 'extract');
   }
 
-  // First element is also sorted
   sortedIndices.push(0);
-  frames.push({
-    array: [...array],
-    event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-    metrics: { ...metrics },
-  });
+  push(
+    { type: 'MARK_SORTED', indices: [...sortedIndices] },
+    { phase: 'extract', heapSize: 0 }
+  );
 
   return frames;
 }

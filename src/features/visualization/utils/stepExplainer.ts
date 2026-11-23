@@ -29,8 +29,8 @@ export function explainStep(
   switch (event.type) {
     case 'COMPARE': {
       const [i, j] = event.indices;
-      const a = array[i];
-      const b = array[j];
+      const a = event.values?.[0] ?? array[i];
+      const b = event.values?.[1] ?? array[j];
       const needsSwap = a > b;
       return {
         emoji: '👁',
@@ -96,6 +96,17 @@ export function explainStep(
         emoji: '🔗',
         headline: `Merging subarray [${range?.[0]}..${range?.[1]}]`,
         detail: `Two sorted halves are being combined into one sorted sequence. Elements are compared one-by-one from each half and placed in order. This is the core step that makes Merge Sort O(n log n).`,
+        phase: `${pct}% complete`,
+      };
+    }
+
+      case 'SPLIT': {
+      const range = event.metadata?.mergeRange;
+      return {
+        emoji: '✂️',
+        headline: `Splitting [${range?.[0]}..${range?.[1]}]`,
+        detail:
+          'This group is cut in half. Splitting continues until every group has a single element, since one element is already sorted.',
         phase: `${pct}% complete`,
       };
     }

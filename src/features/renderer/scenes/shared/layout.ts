@@ -40,13 +40,10 @@ export function getIds(
   return originalArray.map((_, i) => i);
 }
 
-// Inverse of ids: positions[id] = position.
-// If an id appears twice (insertion sort's temporary gap), the later
-// position wins, which is where the element actually is.
 export function positionsOf(ids: number[]): number[] {
   const positions = new Array<number>(ids.length).fill(0);
   ids.forEach((id, index) => {
-    positions[id] = index;
+    if (id >= 0) positions[id] = index;
   });
   return positions;
 }
