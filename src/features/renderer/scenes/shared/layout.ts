@@ -46,7 +46,7 @@ export function getIds(
 export function positionsOf(ids: number[]): number[] {
   const positions = new Array<number>(ids.length).fill(0);
   ids.forEach((id, index) => {
-    positions[id] = index;
+    if (id >= 0) positions[id] = index;
   });
   return positions;
 }
