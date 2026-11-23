@@ -72,10 +72,58 @@ function getLines(
     } else if (type === "SWAP") {
       hint =
         frame?.event.indices[1] === state.high
-          ? `The pivot drops into its final position.`
+          ? "The pivot drops into its final position."
           : `A value ≤ ${pivot} moves into the cyan zone.`;
     }
     return { title: `Pivot ${pivot}`, hint };
+  }
+
+  if (algorithm === "merge") {
+    if (type === "SPLIT") {
+      return {
+        title: `Splitting [${state?.low}..${state?.high}]`,
+        hint: "Cut the group in half. Keep splitting until every group is one element.",
+      };
+    }
+    if (type === "MARK_SORTED") {
+      return {
+        title: "Merged!",
+        hint: "Every group has been merged back into one sorted row.",
+      };
+    }
+    if (state?.phase === "merge" && state.low !== undefined) {
+      let hint = "Both sorted halves lift into the back row, ready to merge.";
+      if (type === "COMPARE") {
+        hint =
+          "Compare the front value of each half (amber). The smaller one goes first.";
+      } else if (type === "OVERWRITE") {
+        hint = "The smaller value drops forward into the row (purple).";
+      }
+      return { title: `Merging [${state.low}..${state.high}]`, hint };
+    }
+    return {
+      title: "Merge Sort",
+      hint: "Split in half, sort each half, then merge the halves back together.",
+    };
+  }
+
+  if (algorithm === "heap") {
+    if (state?.phase === "build") {
+      return {
+        title: "Phase 1 · Build the max-heap",
+        hint: "Sift each parent down until it is larger than both of its children.",
+      };
+    }
+    if (state?.phase === "extract") {
+      return {
+        title: "Phase 2 · Extract the largest",
+        hint: "The root swaps to the end of the array, then the heap is repaired.",
+      };
+    }
+    return {
+      title: "Heap Sort",
+      hint: "The tree above shows the same values as the bars below.",
+    };
   }
 
   return { title: "", hint: "" };

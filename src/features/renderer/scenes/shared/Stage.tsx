@@ -13,13 +13,21 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 const FOV = 45;
 
-// Camera distance adapts to the container so bars are never cropped
-function CameraRig({ width }: { width: number }) {
+function CameraRig({
+  width,
+  height,
+  lookY,
+}: {
+  width: number;
+  height: number;
+  lookY: number;
+}) {
   const size = useThree((s) => s.size);
   const aspect = size.width / Math.max(size.height, 1);
   const tanHalf = Math.tan((FOV * Math.PI) / 360);
-  const fit = (width * 0.5 * 1.25) / (tanHalf * aspect);
-  const dist = Math.max(26, fit);
+  const fitW = (width * 0.5 * 1.25) / (tanHalf * aspect);
+  const fitH = (height * 0.5 * 1.15) / tanHalf;
+  const dist = Math.max(26, fitW, fitH);
 
   return (
     <PerspectiveCamera
@@ -27,7 +35,7 @@ function CameraRig({ width }: { width: number }) {
       fov={FOV}
       near={0.1}
       far={300}
-      position={[0, dist * 0.28, dist]}
+      position={[0, lookY - 3.5 + dist * 0.28, dist]}
     />
   );
 }
@@ -35,10 +43,18 @@ function CameraRig({ width }: { width: number }) {
 interface StageProps {
   children: ReactNode;
   width: number;
+  height?: number; // vertical extent of the scene
+  lookY?: number; // height the camera looks at
   autoRotate?: boolean;
 }
 
-export function Stage({ children, width, autoRotate = false }: StageProps) {
+export function Stage({
+  children,
+  width,
+  height = 12,
+  lookY = 3.5,
+  autoRotate = false,
+}: StageProps) {
   return (
     <Canvas
       dpr={[1, 2]}
@@ -48,7 +64,7 @@ export function Stage({ children, width, autoRotate = false }: StageProps) {
       <color attach="background" args={["#05050f"]} />
       <fog attach="fog" args={["#05050f", 55, 120]} />
 
-      <CameraRig width={width} />
+      <CameraRig width={width} height={height} lookY={lookY} />
 
       <OrbitControls
         makeDefault
@@ -57,14 +73,13 @@ export function Stage({ children, width, autoRotate = false }: StageProps) {
         maxDistance={80}
         maxPolarAngle={Math.PI / 2.05}
         minPolarAngle={0.15}
-        target={[0, 3.5, 0]}
+        target={[0, lookY, 0]}
         autoRotate={autoRotate}
         autoRotateSpeed={0.6}
         enableDamping
         dampingFactor={0.08}
       />
 
-      {/* Lighting */}
       <ambientLight intensity={0.35} />
       <directionalLight position={[10, 18, 12]} intensity={1.2} />
       <pointLight
@@ -80,7 +95,6 @@ export function Stage({ children, width, autoRotate = false }: StageProps) {
         distance={60}
       />
 
-      {/* Local studio reflections for the metal — no network download */}
       <Environment frames={1} resolution={128}>
         <Lightformer
           form="rect"
@@ -107,7 +121,6 @@ export function Stage({ children, width, autoRotate = false }: StageProps) {
         />
       </Environment>
 
-      {/* Floor */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.34, 0]}>
         <planeGeometry args={[200, 100]} />
         <meshStandardMaterial color="#070718" roughness={0.9} metalness={0.2} />

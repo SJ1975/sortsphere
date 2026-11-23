@@ -1,106 +1,143 @@
-import { SortFrame, SortMetrics } from '@/types/sorting';
+import { SortEvent, SortFrame, SortMetrics, SortState } from '@/types/sorting';
 
 export function mergeSort(inputArray: number[]): SortFrame[] {
   const frames: SortFrame[] = [];
   const array = [...inputArray];
+  const ids = array.map((_, i) => i);
+  const n = array.length;
   const metrics: SortMetrics = { comparisons: 0, swaps: 0 };
+  let cuts: number[] = [];
 
-  function merge(arr: number[], left: number, mid: number, right: number): void {
-    const leftArr = arr.slice(left, mid + 1);   // Copy left half
-    const rightArr = arr.slice(mid + 1, right + 1); // Copy right half
-
-    // MERGE: highlight the range being merged
-    const mergeIndices = Array.from(
-      { length: right - left + 1 },
-      (_, i) => left + i
-    );
+  const push = (event: SortEvent, state?: SortState) => {
     frames.push({
-      array: [...arr],
-      event: {
-        type: 'MERGE',
-        indices: mergeIndices,
-        metadata: { mergeRange: [left, right] },
-      },
+      array: [...array],
+      ids: [...ids],
+      event,
       metrics: { ...metrics },
+      state: { ...state, cuts: [...cuts] },
+    });
+  };
+
+  const rangeOf = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+  function merge(left: number, mid: number, right: number): void {
+    const leftArr = array.slice(left, mid + 1);
+    const rightArr = array.slice(mid + 1, right + 1);
+    const leftIds = ids.slice(left, mid + 1);
+    const rightIds = ids.slice(mid + 1, right + 1);
+
+    // Both halves lift into buffers; the row slots stay empty (-1)
+    // until each value is written back.
+    const leftBuf = [...leftIds];
+    const rightBuf = [...rightIds];
+    for (let x = left; x <= right; x++) ids[x] = -1;
+
+    const bufState = (extra: SortState = {}): SortState => ({
+      low: left,
+      mid,
+      high: right,
+      phase: 'merge',
+      leftBuf: [...leftBuf],
+      rightBuf: [...rightBuf],
+      ...extra,
     });
 
-    let i = 0;       // Left array pointer
-    let j = 0;       // Right array pointer
-    let k = left;    // Main array pointer
+    push(
+      {
+        type: 'MERGE',
+        indices: rangeOf(left, right),
+        metadata: { mergeRange: [left, right] },
+      },
+      bufState()
+    );
+
+    const place = (k: number, value: number, id: number) => {
+      array[k] = value;
+      ids[k] = id;
+      metrics.swaps++;
+      // The gap closes once the last slot of this merge is filled
+      if (k === right) cuts = cuts.filter((c) => c !== mid);
+      push(
+        { type: 'OVERWRITE', indices: [k], values: [value] },
+        bufState({ placedId: id })
+      );
+    };
+
+    let i = 0;
+    let j = 0;
+    let k = left;
 
     while (i < leftArr.length && j < rightArr.length) {
-      // COMPARE: which element is smaller?
       metrics.comparisons++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'COMPARE', indices: [left + i, mid + 1 + j] },
-        metrics: { ...metrics },
-      });
+      push(
+        {
+          type: 'COMPARE',
+          indices: [left + i, mid + 1 + j],
+          values: [leftArr[i], rightArr[j]],
+        },
+        bufState({ aId: leftIds[i], bId: rightIds[j] })
+      );
 
       if (leftArr[i] <= rightArr[j]) {
-        arr[k] = leftArr[i];
+        const id = leftIds[i];
+        leftBuf[i] = -1;
+        place(k, leftArr[i], id);
         i++;
       } else {
-        arr[k] = rightArr[j];
+        const id = rightIds[j];
+        rightBuf[j] = -1;
+        place(k, rightArr[j], id);
         j++;
       }
-
-      // OVERWRITE: write the chosen element into position
-      metrics.swaps++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'OVERWRITE', indices: [k], values: [arr[k]] },
-        metrics: { ...metrics },
-      });
       k++;
     }
 
-    // Copy remaining elements from left half
     while (i < leftArr.length) {
-      arr[k] = leftArr[i];
-      metrics.swaps++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'OVERWRITE', indices: [k], values: [arr[k]] },
-        metrics: { ...metrics },
-      });
+      const id = leftIds[i];
+      leftBuf[i] = -1;
+      place(k, leftArr[i], id);
       i++;
       k++;
     }
 
-    // Copy remaining elements from right half
     while (j < rightArr.length) {
-      arr[k] = rightArr[j];
-      metrics.swaps++;
-      frames.push({
-        array: [...arr],
-        event: { type: 'OVERWRITE', indices: [k], values: [arr[k]] },
-        metrics: { ...metrics },
-      });
+      const id = rightIds[j];
+      rightBuf[j] = -1;
+      place(k, rightArr[j], id);
       j++;
       k++;
     }
   }
 
-  function divide(arr: number[], left: number, right: number): void {
-    if (left >= right) return;                         // Base case: single element
+  function divide(left: number, right: number): void {
+    if (left >= right) return;
     const mid = Math.floor((left + right) / 2);
-    divide(arr, left, mid);                            // Sort left half
-    divide(arr, mid + 1, right);                       // Sort right half
-    merge(arr, left, mid, right);                      // Merge both halves
+
+    cuts = [...cuts, mid]; // the gap opens
+    push(
+      {
+        type: 'SPLIT',
+        indices: rangeOf(left, right),
+        metadata: { mergeRange: [left, right] },
+      },
+      { low: left, mid, high: right, phase: 'divide' }
+    );
+
+    divide(left, mid);
+    divide(mid + 1, right);
+    merge(left, mid, right);
   }
 
-  divide(array, 0, array.length - 1);
+  // Starting frame: nothing split yet
+  push({ type: 'RESET', indices: [] }, { phase: 'divide', low: 0, high: n - 1 });
 
-  // Mark everything sorted at the end
-  frames.push({
-    array: [...array],
-    event: {
-      type: 'MARK_SORTED',
-      indices: Array.from({ length: array.length }, (_, i) => i),
-    },
-    metrics: { ...metrics },
-  });
+  divide(0, n - 1);
+
+  push(
+    { type: 'MARK_SORTED', indices: rangeOf(0, n - 1) },
+    { phase: 'merge' }
+  );
 
   return frames;
 }
