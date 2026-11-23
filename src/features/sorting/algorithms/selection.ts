@@ -1,58 +1,55 @@
-import { SortFrame, SortMetrics } from '@/types/sorting';
+import { SortEvent, SortFrame, SortMetrics, SortState } from '@/types/sorting';
 
 export function selectionSort(inputArray: number[]): SortFrame[] {
   const frames: SortFrame[] = [];
   const array = [...inputArray];
+  const ids = array.map((_, i) => i);
   const n = array.length;
   const metrics: SortMetrics = { comparisons: 0, swaps: 0 };
   const sortedIndices: number[] = [];
 
+  const push = (event: SortEvent, state?: SortState) => {
+    frames.push({
+      array: [...array],
+      ids: [...ids],
+      event,
+      metrics: { ...metrics },
+      state,
+    });
+  };
+
   for (let i = 0; i < n - 1; i++) {
     let minIndex = i;
 
-    // Search for the minimum element in the unsorted portion
     for (let j = i + 1; j < n; j++) {
-
-      // COMPARE: is this element smaller than our current minimum?
       metrics.comparisons++;
-      frames.push({
-        array: [...array],
-        event: { type: 'COMPARE', indices: [j, minIndex] },
-        metrics: { ...metrics },
-      });
 
-      if (array[j] < array[minIndex]) {
-        minIndex = j;
-      }
+      // The flag reflects the result of THIS comparison, so it
+      // jumps the moment a smaller value is found.
+      const newMin = array[j] < array[minIndex] ? j : minIndex;
+      push(
+        { type: 'COMPARE', indices: [j, minIndex] },
+        { i, j, minIndex: newMin, minId: ids[newMin] }
+      );
+      minIndex = newMin;
     }
 
-    // SWAP: move minimum to its correct position
     if (minIndex !== i) {
       [array[i], array[minIndex]] = [array[minIndex], array[i]];
+      [ids[i], ids[minIndex]] = [ids[minIndex], ids[i]];
       metrics.swaps++;
-      frames.push({
-        array: [...array],
-        event: { type: 'SWAP', indices: [i, minIndex] },
-        metrics: { ...metrics },
-      });
+      push(
+        { type: 'SWAP', indices: [i, minIndex] },
+        { i, minIndex: i, minId: ids[i] }
+      );
     }
 
-    // This index is now in its final sorted position
     sortedIndices.push(i);
-    frames.push({
-      array: [...array],
-      event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-      metrics: { ...metrics },
-    });
+    push({ type: 'MARK_SORTED', indices: [...sortedIndices] }, { i });
   }
 
-  // Last element is also sorted
   sortedIndices.push(n - 1);
-  frames.push({
-    array: [...array],
-    event: { type: 'MARK_SORTED', indices: [...sortedIndices] },
-    metrics: { ...metrics },
-  });
+  push({ type: 'MARK_SORTED', indices: [...sortedIndices] }, { i: n - 1 });
 
   return frames;
 }
